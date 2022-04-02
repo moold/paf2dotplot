@@ -13,6 +13,9 @@ option_list <- list(
   make_option(c("-f","--flip"), action="store_true", default=FALSE,
               help="flip query if most alignments are in reverse complement [%default]",
               dest="flip"),
+  make_option(c("-b","--break-point"), action="store_true", default=FALSE,
+              help="show break points [%default]",
+              dest="break_point"),
   make_option(c("-q", "--min-query-length"), type="numeric", default=400000,
               help="filter queries with total alignments less than cutoff X bp [%default]",
               dest="min_query_aln"),
@@ -130,10 +133,18 @@ alignments$queryStart2 = alignments$queryStart + sapply(as.character(alignments$
 alignments$queryEnd2 = alignments$queryEnd + sapply(as.character(alignments$queryID), function(x) ifelse(x == names(queryMax)[1], 0, cumsum(queryMax)[match(x, names(queryMax)) - 1]) )
 
 # plot
+if (opt$break_point) {
+  break_size = 1;
+  alignments$break_col = rep(0, length(alignments$percentID));
+}else{
+  break_size = 0.009;
+  alignments$break_col = alignments$percentID;
+}
+
 options(warn = -1) # turn off warnings
 gp = ggplot(alignments) +
-  geom_point(mapping = aes(x = refStart2, y = queryStart2, color = percentID), size = 0.009) +
-  geom_point(mapping = aes(x = refEnd2, y = queryEnd2, color = percentID), size = 0.009) +
+  geom_point(mapping = aes(x = refStart2, y = queryStart2, color = break_col), size = break_size) +
+  geom_point(mapping = aes(x = refEnd2, y = queryEnd2, color = break_col), size = break_size) +
   geom_segment(aes(x = refStart2, xend = refEnd2, y = queryStart2, yend = queryEnd2, color = percentID)) +
   scale_x_continuous(expand = c(0, 0), breaks = cumsum(as.numeric(chromMax)), labels = levels(alignments$refID)) +
   theme_bw() + 
