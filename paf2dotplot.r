@@ -16,6 +16,9 @@ option_list <- list(
   make_option(c("-b","--break-point"), action="store_true", default=FALSE,
               help="show break points [%default]",
               dest="break_point"),
+  make_option(c("-s", "--sort-by-refid"), action="store_true", default=FALSE,
+              help="sort reference IDs in alphabetical order, default by length [%default]",
+              dest="sortbyID"),
   make_option(c("-q", "--min-query-length"), type="numeric", default=400000,
               help="filter queries with total alignments less than cutoff X bp [%default]",
               dest="min_query_aln"),
@@ -68,8 +71,12 @@ cat(paste0("Number of query sequences: ", length(unique(alignments$queryID)), "\
 
 # sort by ref chromosome sizes, keep top X chromosomes OR keep specified IDs
 if(is.null(opt$refIDs)){
-  chromMax = tapply(alignments$refLen, alignments$refID, max)
-  refIDsToKeepOrdered = names(sort(chromMax, decreasing = T))
+  if (opt$sortbyID){
+    refIDsToKeepOrdered = unique(sort(alignments$refID))
+  }else{
+    chromMax = tapply(alignments$refLen, alignments$refID, max)
+    refIDsToKeepOrdered = names(sort(chromMax, decreasing = T))
+  }
 }else{
   refIDsToKeepOrdered = unlist(strsplit(opt$refIDs, ","))
   alignments = alignments[which(alignments$refID %in% refIDsToKeepOrdered),]
@@ -132,7 +139,7 @@ if(opt$flip){
 alignments$queryStart2 = alignments$queryStart + sapply(as.character(alignments$queryID), function(x) ifelse(x == names(queryMax)[1], 0, cumsum(queryMax)[match(x, names(queryMax)) - 1]) )
 alignments$queryEnd2 = alignments$queryEnd + sapply(as.character(alignments$queryID), function(x) ifelse(x == names(queryMax)[1], 0, cumsum(queryMax)[match(x, names(queryMax)) - 1]) )
 
-# plot
+# plot break points
 if (opt$break_point) {
   break_size = 1;
   alignments$break_col = rep(0, length(alignments$percentID));
@@ -146,7 +153,6 @@ gp = ggplot(alignments) +
   geom_point(mapping = aes(x = refStart2, y = queryStart2, color = break_col), size = break_size) +
   geom_point(mapping = aes(x = refEnd2, y = queryEnd2, color = break_col), size = break_size) +
   geom_segment(aes(x = refStart2, xend = refEnd2, y = queryStart2, yend = queryEnd2, color = percentID)) +
-  scale_x_continuous(expand = c(0, 0), breaks = cumsum(as.numeric(chromMax)), labels = levels(alignments$refID)) +
   theme_bw() + 
   theme(
     text = element_text(size = 12),
@@ -155,14 +161,56 @@ gp = ggplot(alignments) +
     axis.text.y = element_text(angle = 15),
     axis.text.x = element_text(hjust = 1, angle = 45)
   ) +
-  scale_y_continuous(expand = c(0, 0), breaks = cumsum(as.numeric(queryMax)), labels = substr(levels(alignments$queryID), start = 1, stop = 20)) +
   scale_color_distiller(palette = "Spectral") +
   labs(color = "Identity",
        title = paste0(paste0("Post-filtering number of alignments: ", nrow(alignments),"\t\t\t\t"),
                       paste0("minimum alignment length (-m): ", opt$min_align,"\n"),
                       paste0("Post-filtering number of queries: ", length(unique(alignments$queryID)),"\t\t\t\t\t\t\t\t"),
                       paste0("minimum query aggregate alignment length (-q): ", opt$min_query_aln)
-       )) + xlab("Reference") + ylab("Query")
+       )
+  )
+
+if (length(unique(alignments$refID)) == 1){
+  reflen = unique(alignments$refLen)
+  xbreaks = seq(0, reflen, reflen/10)
+  if (reflen/10 > 1e9){
+    xlables = paste(round(xbreaks/1e9), "GB")
+  }else if (reflen/10 > 1e6) {
+    xlables = paste(round(xbreaks/1e6), "MB")
+  }else if(reflen/10 > 1e3){
+    xlables = paste(round(xbreaks/1e3), "KB")
+  }else{
+    xlables = paste(round(xbreaks), "bp")
+  }
+
+  gp = gp + scale_x_continuous(expand = c(0, 0), limits = c(0, reflen + 0.1), breaks = xbreaks, labels = xlables) +
+    xlab(unique(alignments$refID))
+}else{
+  gp = gp + scale_x_continuous(expand = c(0, 0), limits = c(0, sum(as.numeric(chromMax)) + 0.1), 
+    breaks = cumsum(as.numeric(chromMax)), labels = levels(alignments$refID)) + 
+    xlab("Reference")
+}
+
+if (length(unique(alignments$queryID)) == 1){
+  queryLen = unique(alignments$queryLen)
+  ybreaks = seq(0, queryLen, queryLen/10)
+  if (queryLen/10 > 1e9){
+    ylables = paste(round(ybreaks/1e9), "GB")
+  }else if (queryLen/10 > 1e6) {
+    ylables = paste(round(ybreaks/1e6), "MB")
+  }else if(queryLen/10 > 1e3){
+    ylables = paste(round(ybreaks/1e3), "KB")
+  }else{
+    ylables = paste(round(ybreaks), "bp")
+  }
+
+  gp = gp + scale_y_continuous(expand = c(0, 0), limits = c(0, queryLen + 0.1), breaks = ybreaks, labels = ylables) +
+    ylab(unique(alignments$queryID))
+}else{
+  gp = gp + scale_y_continuous(expand = c(0, 0), limits = c(0, sum(as.numeric(queryMax)) + 0.1), 
+    breaks = cumsum(as.numeric(queryMax)), labels = substr(levels(alignments$queryID), start = 1, stop = 20)) +
+    ylab("Query")
+}
 # gp
 ggsave(filename = paste0(opt$output_filename, ".pdf"), width = opt$plot_size, height = opt$plot_size * 0.8, units = "in", dpi = 300, limitsize = F)
 options(warn=0) # turn on warnings
