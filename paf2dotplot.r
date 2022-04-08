@@ -52,7 +52,7 @@ if(is.null(opt$output_filename)){
 }
 
 # read in alignments
-alignments = read.table(input_file, stringsAsFactors = F, fill = T)
+alignments = read.table(input_file, stringsAsFactors = F, row.names=NULL, fill = T)
 alignments = alignments[, seq(1, 12)]
 # set column names
 # PAF IS ZERO-BASED - CHECK HOW CODE WORKS
