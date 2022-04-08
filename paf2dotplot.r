@@ -34,7 +34,7 @@ option_list <- list(
 )
 
 options(error=traceback)
-parser <- OptionParser(usage = "%prog [options] input.paf", option_list = option_list)
+parser <- OptionParser(usage = "%prog [options] input.paf\n\nFor more information, see https://github.com/moold/paf2dotplot", option_list = option_list)
 opts = parse_args(parser, positional_arguments = c(0, 1))
 opt = opts$options
 input_file = opts$args
