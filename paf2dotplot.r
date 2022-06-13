@@ -95,6 +95,10 @@ alignments = alignments[which(alignments$queryID %in% names(queryLenAgg)[which(q
 
 cat(paste0("\nAfter filtering... Number of alignments: ", nrow(alignments),"\n"))
 cat(paste0("After filtering... Number of query sequences: ", length(unique(alignments$queryID)),"\n\n"))
+
+# filter refIDsToKeepOrdered if some refID are filtered
+refIDsToKeepOrdered = refIDsToKeepOrdered[which(refIDsToKeepOrdered %in% alignments$refID)]
+
 # sort df on ref
 alignments$refID = factor(alignments$refID, levels = refIDsToKeepOrdered) # set order of refID
 alignments = alignments[with(alignments,order(refID,refStart)),]
