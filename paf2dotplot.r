@@ -149,10 +149,7 @@ if (opt$break_point) {
 }
 
 options(warn = -1) # turn off warnings
-gp = ggplot(alignments) +
-  geom_point(mapping = aes(x = refStart2, y = queryStart2, color = break_col), size = break_size) +
-  geom_point(mapping = aes(x = refEnd2, y = queryEnd2, color = break_col), size = break_size) +
-  geom_segment(aes(x = refStart2, xend = refEnd2, y = queryStart2, yend = queryEnd2, color = percentID)) +
+gp = ggplot(alignments) + 
   theme_bw() + 
   theme(
     text = element_text(size = 12),
@@ -170,6 +167,7 @@ gp = ggplot(alignments) +
        )
   )
 
+# x
 if (length(unique(alignments$refID)) == 1){
   reflen = unique(alignments$refLen)
   xbreaks = seq(0, reflen, reflen/10)
@@ -186,11 +184,15 @@ if (length(unique(alignments$refID)) == 1){
   gp = gp + scale_x_continuous(expand = c(0, 0), limits = c(0, reflen + 0.1), breaks = xbreaks, labels = xlables) +
     xlab(unique(alignments$refID))
 }else{
-  gp = gp + scale_x_continuous(expand = c(0, 0), limits = c(0, sum(as.numeric(chromMax)) + 0.1), 
-    breaks = cumsum(as.numeric(chromMax)), labels = levels(alignments$refID)) + 
+  gp = gp + 
+    theme(panel.grid.major.x=element_blank()) +
+    geom_vline(xintercept = cumsum(as.numeric(chromMax)), col="#ebebeb") + 
+    scale_x_continuous(expand = c(0, 0), limits = c(0, sum(as.numeric(chromMax)) + 0.1), 
+      breaks = cumsum(as.numeric(chromMax)) - chromMax/2, labels = substr(levels(alignments$refID), start = 1, stop = 20)) + 
     xlab("Reference")
 }
 
+# y
 if (length(unique(alignments$queryID)) == 1){
   queryLen = unique(alignments$queryLen)
   ybreaks = seq(0, queryLen, queryLen/10)
@@ -207,10 +209,20 @@ if (length(unique(alignments$queryID)) == 1){
   gp = gp + scale_y_continuous(expand = c(0, 0), limits = c(0, queryLen + 0.1), breaks = ybreaks, labels = ylables) +
     ylab(unique(alignments$queryID))
 }else{
-  gp = gp + scale_y_continuous(expand = c(0, 0), limits = c(0, sum(as.numeric(queryMax)) + 0.1), 
-    breaks = cumsum(as.numeric(queryMax)), labels = substr(levels(alignments$queryID), start = 1, stop = 20)) +
+    gp = gp + 
+    theme(panel.grid.major.y=element_blank()) +
+    geom_hline(yintercept = cumsum(as.numeric(queryMax)), col="#ebebeb") + 
+    scale_y_continuous(expand = c(0, 0), limits = c(0, sum(as.numeric(queryMax)) + 0.1), 
+      breaks = cumsum(as.numeric(queryMax)) - queryMax/2, labels = substr(levels(alignments$queryID), start = 1, stop = 20)) + 
     ylab("Query")
 }
-# gp
+
+# co-line
+gp = gp + 
+  geom_point(mapping = aes(x = refStart2, y = queryStart2, color = break_col), size = break_size) +
+  geom_point(mapping = aes(x = refEnd2, y = queryEnd2, color = break_col), size = break_size) +
+  geom_segment(aes(x = refStart2, xend = refEnd2, y = queryStart2, yend = queryEnd2, color = percentID))
+
+# save
 ggsave(filename = paste0(opt$output_filename, ".pdf"), width = opt$plot_size, height = opt$plot_size * 0.8, units = "in", dpi = 300, limitsize = F)
 options(warn=0) # turn on warnings
