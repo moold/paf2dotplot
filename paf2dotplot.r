@@ -53,7 +53,9 @@ if(is.null(opt$output_filename)){
 
 # read in alignments
 alignments = read.table(input_file, stringsAsFactors = F, row.names=NULL, fill = T)
-alignments = alignments[, seq(1, 12)]
+# avoid inter overflow
+alignments[, c(2:4, 7:12)] = apply(alignments[, c(2:4, 7:12)], 2, as.double)
+
 # set column names
 # PAF IS ZERO-BASED - CHECK HOW CODE WORKS
 colnames(alignments)[1:12] = c("queryID","queryLen","queryStart","queryEnd","strand","refID","refLen","refStart","refEnd","numResidueMatches","lenAln","mapQ")
