@@ -16,6 +16,9 @@ option_list <- list(
   make_option(c("-b","--break-point"), action="store_true", default=FALSE,
               help="show break points [%default]",
               dest="break_point"),
+  make_option(c("-c","--identity-lower-color"), type="numeric", default=0,
+              help="percent identity that lower than this value will be assigned the same color [%default]",
+              dest="identity_lower"),
   make_option(c("-s", "--sort-by-refid"), action="store_true", default=FALSE,
               help="sort reference IDs in alphabetical order, default by length [%default]",
               dest="sortbyID"),
@@ -62,6 +65,10 @@ colnames(alignments)[1:12] = c("queryID","queryLen","queryStart","queryEnd","str
 
 # caculate similarity
 alignments$percentID = alignments$numResidueMatches / alignments$lenAln
+if (opt$identity_lower) {
+    alignments$percentID[which(alignments$percentID < opt$identity_lower)] <- opt$identity_lower
+}
+
 queryStartTemp = alignments$queryStart
 # Flip starts, ends for negative strand alignments
 alignments$queryStart[which(alignments$strand == "-")] = alignments$queryEnd[which(alignments$strand == "-")]
