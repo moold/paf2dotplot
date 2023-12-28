@@ -55,7 +55,7 @@ if(is.null(opt$output_filename)){
 }
 
 # read in alignments
-alignments = read.table(input_file, stringsAsFactors = F, row.names=NULL, fill = T)[, c(1:12)]
+alignments = read.table(input_file, stringsAsFactors = F, row.names=NULL, fill = T, header = F)[, c(1:12)]
 # avoid inter overflow
 alignments[, c(2:4, 7:12)] = apply(alignments[, c(2:4, 7:12)], 2, as.double)
 
