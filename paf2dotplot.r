@@ -154,11 +154,7 @@ alignments$queryEnd2 = alignments$queryEnd + sapply(as.character(alignments$quer
 
 # plot break points
 if (opt$break_point) {
-  break_size = 1;
   alignments$break_col = rep(0, length(alignments$percentID));
-}else{
-  break_size = 0.009;
-  alignments$break_col = alignments$percentID;
 }
 
 options(warn = -1) # turn off warnings
@@ -230,11 +226,14 @@ if (length(unique(alignments$queryID)) == 1){
     ylab("Query")
 }
 
-# co-line
-gp = gp + 
-  geom_point(mapping = aes(x = refStart2, y = queryStart2, color = break_col), size = break_size) +
-  geom_point(mapping = aes(x = refEnd2, y = queryEnd2, color = break_col), size = break_size) +
-  geom_segment(aes(x = refStart2, xend = refEnd2, y = queryStart2, yend = queryEnd2, color = percentID))
+# plot co-line
+gp = gp + geom_segment(aes(x = refStart2, xend = refEnd2, y = queryStart2, yend = queryEnd2, color = percentID))
+
+# plot break points
+if (opt$break_point) {
+  gp = gp + geom_point(mapping = aes(x = refStart2, y = queryStart2, color = break_col), size = opt$plot_size/60, shape = 19) +
+    geom_point(mapping = aes(x = refEnd2, y = queryEnd2, color = break_col), size = opt$plot_size/60, shape = 19)
+}
 
 # save
 ggsave(filename = paste0(opt$output_filename, ".pdf"), width = opt$plot_size, height = opt$plot_size * 0.8, units = "in", dpi = 300, limitsize = F)
