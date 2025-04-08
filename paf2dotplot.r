@@ -105,6 +105,11 @@ alignments = alignments[which(alignments$queryID %in% names(queryLenAgg)[which(q
 cat(paste0("\nAfter filtering... Number of alignments: ", nrow(alignments),"\n"))
 cat(paste0("After filtering... Number of query sequences: ", length(unique(alignments$queryID)),"\n\n"))
 
+if (nrow(alignments) == 0) {
+  cat("Error: All alignments were discarded after filtering, no valid alignments remain.\n\n.")
+  quit()
+}
+
 # filter refIDsToKeepOrdered if some refID are filtered
 refIDsToKeepOrdered = refIDsToKeepOrdered[which(refIDsToKeepOrdered %in% alignments$refID)]
 
