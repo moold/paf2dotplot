@@ -3,6 +3,20 @@
 suppressPackageStartupMessages(library(optparse))
 suppressPackageStartupMessages(library(ggplot2))
 
+generate_colors <- function(n){
+  # check RColorBrewer
+  if (!requireNamespace("RColorBrewer", quietly = TRUE)) {
+    stop("Package 'RColorBrewer' is required for generate_colors. Please install it with install.packages('RColorBrewer')")
+  }
+
+  if (n <= 12) {
+    RColorBrewer::brewer.pal(n, "Set3")
+  } else {
+    # When n > 12, extend using colorRampPalette
+    colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))(n)
+  }
+}
+
 option_list <- list(
   make_option(c("-o","--output"), type="character",
               help="output filename prefix [input.paf]", 
@@ -33,13 +47,27 @@ option_list <- list(
               dest="min_ref_len"),
   make_option(c("-i", "--reference-ids"), type="character", default=NULL,
               help="comma-separated list of reference IDs to keep and order [%default]",
-              dest="refIDs")
+              dest="refIDs"),
+  make_option(c("-e", "--ref-bed"), type="character", default=NULL,
+              help="reference BED file to draw vertical dotted lines at the specified regions.",
+              dest="ref_bed_file"),
+  make_option(c("-E", "--query-bed"), type="character", default=NULL,
+              help="query BED file to draw horizontal dotted lines at the specified regions.",
+              dest="query_bed_file"),
+  make_option(c("-v", "--version"), action="store_true", default=FALSE, help="Show version and exit")
 )
 
 options(error=traceback)
 parser <- OptionParser(usage = "%prog [options] input.paf\n\nFor more information, see https://github.com/moold/paf2dotplot", option_list = option_list)
 opts = parse_args(parser, positional_arguments = c(0, 1))
 opt = opts$options
+
+script_version <- "1.0.0"
+if (opt$version) {
+  cat(paste0("version: ", script_version, "\n"))
+  quit(status=0)
+}
+
 input_file = opts$args
 if(length(input_file) <= 0){
   cat(sprintf("Error: missing input file: input.paf!\n\n"))
@@ -238,6 +266,51 @@ gp = gp + geom_segment(aes(x = refStart2, xend = refEnd2, y = queryStart2, yend 
 if (opt$break_point) {
   gp = gp + geom_point(mapping = aes(x = refStart2, y = queryStart2, color = break_col), size = opt$plot_size/60, shape = 19) +
     geom_point(mapping = aes(x = refEnd2, y = queryEnd2, color = break_col), size = opt$plot_size/60, shape = 19)
+}
+
+# plot regions in ref bed
+if (!is.null(opt$ref_bed_file)) {
+  ref_bed = read.table(opt$ref_bed_file, header=F, stringsAsFactors=F)
+  colnames(ref_bed)[1:3] = c("refID", "start", "end")
+  ref_bed$color = generate_colors(nrow(ref_bed))
+
+  ref_bed$xstart = ref_bed$start + sapply(ref_bed$refID, function(x) {
+    ifelse(x == names(chromMax)[1], 0, cumsum(as.numeric(chromMax))[match(x, names(chromMax))-1])
+  })
+  ref_bed$xend = ref_bed$end + sapply(ref_bed$refID, function(x) {
+    ifelse(x == names(chromMax)[1], 0, cumsum(as.numeric(chromMax))[match(x, names(chromMax))-1])
+  })
+
+  for (i in 1:nrow(ref_bed)) {
+    gp = gp + geom_vline(xintercept = c(ref_bed$xstart[i], ref_bed$xend[i]), linetype="dashed", color=ref_bed$color[i])
+  }
+}
+
+# plot regions in query bed
+if (!is.null(opt$query_bed_file)) {
+  query_bed = read.table(opt$query_bed_file, header=F, stringsAsFactors=F)
+  colnames(query_bed)[1:3] = c("queryID", "start", "end")
+  query_bed$color = generate_colors(nrow(query_bed))
+
+  if (opt$flip) {
+    rev_idx = which(query_bed$queryID %in% queryRevComp)
+    if (length(rev_idx) > 0) {
+      query_bed$start[rev_idx] = queryMax[query_bed$queryID[rev_idx]] - query_bed$start[rev_idx] + 1
+      query_bed$end[rev_idx] = queryMax[query_bed$queryID[rev_idx]] - query_bed$end[rev_idx] + 1
+    }
+  }
+
+  query_bed$ystart = query_bed$start + sapply(query_bed$queryID, function(x) {
+    ifelse(x == names(queryMax)[1], 0, cumsum(queryMax)[match(x, names(queryMax)) - 1])
+  })
+  query_bed$yend = query_bed$end + sapply(query_bed$queryID, function(x) {
+    ifelse(x == names(queryMax)[1], 0, cumsum(queryMax)[match(x, names(queryMax)) - 1])
+  })
+
+  for (i in 1:nrow(query_bed)) {
+    gp = gp + geom_hline(yintercept = c(query_bed$ystart[i], query_bed$yend[i]),
+                         linetype="twodash", color=query_bed$color[i])
+  }
 }
 
 # save
