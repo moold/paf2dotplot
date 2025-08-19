@@ -9,7 +9,7 @@ The script requires two R packages: `optparse`, `ggplot2`
 # download
 git clone https://github.com/moold/paf2dotplot.git
 # install R packages
-R --slave -e 'install.packages(c("optparse", "ggplot2"))'
+R --slave -e 'install.packages(c("optparse", "ggplot2", "RColorBrewer"))'
 ```
 
 ## Usage
