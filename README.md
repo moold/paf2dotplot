@@ -29,7 +29,7 @@ Use `./paf2dotplot.r -h` to see options.
 ## Update Notes
 
 * Version 1.0.1 (2025.09.18):
-  - Fixed `generate_colors()` when n < 3 (ensures correct length), #5 (Thanks to @dukecomeback).
+  - Fixed `generate_colors()` when n < 3 (ensures correct length), [#5](https://github.com/moold/paf2dotplot/issues/5#issuecomment-3301864965) (Thanks to @dukecomeback).
 
 * Version 1.0.0 (2025.08.19):
   - Added `-e, --ref-bed`: support reference BED file (vertical dotted lines).
