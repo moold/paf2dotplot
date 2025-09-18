@@ -10,7 +10,7 @@ generate_colors <- function(n){
   }
 
   if (n <= 12) {
-    RColorBrewer::brewer.pal(n, "Set3")
+    RColorBrewer::brewer.pal(n, "Set3")[1:n]
   } else {
     # When n > 12, extend using colorRampPalette
     colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))(n)
@@ -62,7 +62,7 @@ parser <- OptionParser(usage = "%prog [options] input.paf\n\nFor more informatio
 opts = parse_args(parser, positional_arguments = c(0, 1))
 opt = opts$options
 
-script_version <- "1.0.0"
+script_version <- "1.0.1"
 if (opt$version) {
   cat(paste0("version: ", script_version, "\n"))
   quit(status=0)
