@@ -62,7 +62,7 @@ parser <- OptionParser(usage = "%prog [options] input.paf\n\nFor more informatio
 opts = parse_args(parser, positional_arguments = c(0, 1))
 opt = opts$options
 
-script_version <- "1.0.1"
+script_version <- "1.0.2"
 if (opt$version) {
   cat(paste0("version: ", script_version, "\n"))
   quit(status=0)
@@ -315,4 +315,5 @@ if (!is.null(opt$query_bed_file)) {
 
 # save
 ggsave(filename = paste0(opt$output_filename, ".pdf"), width = opt$plot_size, height = opt$plot_size * 0.8, units = "in", dpi = 300, limitsize = F)
+ggsave(filename = paste0(opt$output_filename, ".png"), width = opt$plot_size, height = opt$plot_size * 0.8, units = "in", dpi = 300, limitsize = F)
 options(warn=0) # turn on warnings
